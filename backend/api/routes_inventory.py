@@ -5,7 +5,8 @@ from services.inventory_service import (
     list_products_service,
     update_price_service,
     update_quantity_service,
-    get_single_product_service
+    get_single_product_service,
+    delete_product_service
 )
 
 router = APIRouter()
@@ -45,3 +46,8 @@ def update_price(data: PriceUpdate):
 @router.get("/inventory/{product_id}")
 def get_product(product_id: str):
     return get_single_product_service(product_id)
+
+@router.delete("/inventory/delete/{product_id}")
+def delete_product(product_id: str):
+    return delete_product_service(product_id)
+

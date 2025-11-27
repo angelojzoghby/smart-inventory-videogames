@@ -38,7 +38,17 @@ def update_price_service(data):
     return {"status": "price updated"}
 
 def get_single_product_service(product_id: str):
+
     return products_collection.find_one(
         {"product_id": product_id},
-        {"_id": 0}
+        {"_id": 0},
     )
+
+def delete_product_service(product_id: str):
+    result = products_collection.find_one_and_delete({"product_id": product_id})
+
+    if result is None:
+        return {"status": "failed", "message": "Product not found"}
+    
+    return {"status": "success", "message": "Product deleted"}
+
