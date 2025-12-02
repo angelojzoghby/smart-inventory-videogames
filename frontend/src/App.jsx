@@ -10,14 +10,18 @@ function Home(){
   const [message, setMessage] = useState(null)
 
   return (
-    <div className="container">
-      <div className="left">
-        <h1>Smart Inventory</h1>
+    <div className="home-page">
+      
+      <div className="upload-container">
+        <h1 className="title ps-title">Smart Inventory</h1>
+
         <UploadForm onResult={r => setResult(r)} />
         <Results data={result} onAdded={m => setMessage(m)} />
-        {message && <div className="notice">{message.status}</div>}
+
+        {message && <div className="notice ps-notice">{message.status}</div>}
       </div>
-      <div className="right">
+
+      <div className="inventory-side">
         <InventoryDashboard />
       </div>
     </div>
@@ -26,11 +30,16 @@ function Home(){
 
 export default function App(){
   return (
-    <div>
-      <nav className="topnav">
-        <Link to="/">Home</Link>
-        <Link to="/inventory">Inventory</Link>
+    <div className="ps-app">
+      <nav className="ps-navbar">
+        <div className="ps-logo">🎮 Smart Inventory</div>
+
+        <div className="ps-links">
+          <Link to="/" className="ps-link">Home</Link>
+          <Link to="/inventory" className="ps-link">Inventory</Link>
+        </div>
       </nav>
+
       <Routes>
         <Route path="/" element={<Home/>} />
         <Route path="/inventory" element={<InventoryDashboard/>} />

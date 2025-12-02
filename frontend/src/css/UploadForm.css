@@ -1,0 +1,72 @@
+
+.ps-upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ps-dropzone {
+  position: relative;
+  border: 2px dashed rgba(59,130,246,0.5);
+  background: #111827;
+  border-radius: 18px;
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.3s;
+  box-shadow: 0 0 25px rgba(59,130,246,0.1);
+}
+
+.ps-dropzone:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 0 25px rgba(59,130,246,0.4);
+  transform: translateY(-2px);
+}
+
+.ps-dropzone.drag-active {
+  border-color: #60a5fa;
+  background: #1e293b;
+  box-shadow: 0 0 35px rgba(59,130,246,0.6);
+}
+
+.ps-dropzone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ps-drop-text {
+  font-size: 1.2rem;
+  color: #e5e7eb;
+  opacity: 0.85;
+  text-shadow: 0 0 8px rgba(59,130,246,.4);
+}
+
+.ps-selected-file {
+  font-size: 1rem;
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.ps-upload-btn {
+  background: #3b82f6;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  color: white;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.ps-upload-btn:hover {
+  background: #60a5fa;
+  box-shadow: 0 0 15px rgba(59,130,246,0.5);
+  transform: translateY(-2px);
+}
+
+.ps-upload-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

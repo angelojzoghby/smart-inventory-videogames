@@ -9,6 +9,8 @@ from services.inventory_service import (
     delete_product_service
 )
 
+from database.mongo import products_collection
+
 router = APIRouter()
 
 class ProductCreate(BaseModel):
@@ -50,4 +52,20 @@ def get_product(product_id: str):
 @router.delete("/inventory/delete/{product_id}")
 def delete_product(product_id: str):
     return delete_product_service(product_id)
+
+
+class FindRequest(BaseModel):
+    product_name: str
+    product_type: str
+
+
+@router.post('/inventory/find')
+def find_product(data: FindRequest):
+    prod = products_collection.find_one({
+        'product_name': data.product_name,
+        'product_type': data.product_type
+    }, { '_id': 0 })
+    if prod:
+        return { 'found': True, 'product': prod }
+    return { 'found': False }
 
