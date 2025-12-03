@@ -53,6 +53,8 @@ def get_product(product_id: str):
 def delete_product(product_id: str):
     return delete_product_service(product_id)
 
+@router.post("/inventory/")
+
 
 class FindRequest(BaseModel):
     product_name: str

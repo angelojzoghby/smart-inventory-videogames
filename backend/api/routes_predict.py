@@ -1,19 +1,21 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Any, Dict
-from services.price_model_service import predict as predict_price, load_model
+from typing import List
+from services.price_model_service import predict as predict_price
 
 router = APIRouter()
 
 class PredictRequest(BaseModel):
-    payload: Dict[str, Any]
+    title: str
+    genres: List[str]
+    dlc: int
+    gamepass: int
+    franchise: int
+    discount: int
 
-@router.post('/predict-price')
-def predict(req: PredictRequest):
+@router.post("/predict-price")
+def predict_price_endpoint(req: PredictRequest):
     try:
-        price = predict_price(req.payload)
-        return { 'price_predicted': price }
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"price_predicted": predict_price(req.dict())}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f'Prediction error: {e}')
+        raise HTTPException(500, str(e))

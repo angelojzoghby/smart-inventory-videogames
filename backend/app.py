@@ -4,6 +4,7 @@ from api.routes_upload import router as upload_router
 from api.routes_inventory import router as inventory_router
 from api.routes_images import router as images_router
 from api.routes_predict import router as predict_router
+from api.routes_classify import router as classify_router
 
 app = FastAPI()
 
@@ -29,6 +30,7 @@ app.include_router(upload_router)
 app.include_router(inventory_router)
 app.include_router(images_router)
 app.include_router(predict_router)
+app.include_router(classify_router)
 
 @app.on_event("startup")
 def startup_event():
@@ -44,15 +46,6 @@ def startup_event():
         logger.warning(f"⚠ Classification model not found: {e}")
     except Exception as e:
         logger.warning(f"⚠ Classification model failed to load: {type(e).__name__}: {e}")
-
-    try:
-        from services.price_model_service import load_model as load_regressor
-        load_regressor()
-        logger.info("✓ Regression (price) model loaded successfully")
-    except FileNotFoundError as e:
-        logger.warning(f"⚠ Regression model not found: {e}")
-    except Exception as e:
-        logger.warning(f"⚠ Regression model failed to load: {type(e).__name__}: {e}")
 
     logger.info("=== Startup Complete ===")
 

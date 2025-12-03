@@ -3,49 +3,72 @@ import { addProduct, findProduct, updateQuantity } from '../api/api'
 import "../css/results.css"
 
 export default function Results({ data, onAdded }) {
-  const [price, setPrice] = useState(data?.price_predicted || 0)
-  const [quantity, setQuantity] = useState(1)
-  const [saving, setSaving] = useState(false)
-  const [mode, setMode] = useState('loading')
+  const [title, setTitle] = useState("")
+  const [genres, setGenres] = useState([])
+  const [dlc, setDlc] = useState(0)
+  const [gamepass, setGamepass] = useState(0)
+  const [franchise, setFranchise] = useState(0)
+  const [discount, setDiscount] = useState(0)
+  const [predictedPrice, setPredictedPrice] = useState(null)
+  const [confirmed, setConfirmed] = useState(false)
   const [existing, setExisting] = useState(null)
+  const [mode, setMode] = useState("loading")
+  const [quantity, setQuantity] = useState(0)
   const [addingQty, setAddingQty] = useState(1)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    setPrice(data?.price_predicted || 0)
-    setQuantity(1)
-    setExisting(null)
     if (!data) return
 
+    setTitle(data.title || "")
+    setGenres(data.genres || [])
+
     async function check() {
-      if (data.exists && data.product) {
-        setExisting(data.product)
-        setMode('exists')
-        return
-      }
       try {
-        const res = await findProduct({ product_name: data.product_name, product_type: data.product_type })
+        const res = await findProduct({
+          product_name: data.title,
+          product_type: "Game"
+        })
         if (res?.found) {
           setExisting(res.product)
-          setMode('exists')
+          setQuantity(res.product.quantity)
+          setMode("exists")
         } else {
-          setMode('new')
+          setMode("new")
         }
       } catch {
-        setMode('new')
+        setMode("new")
       }
     }
-
     check()
   }, [data])
 
-  async function handleCreate() {
+  async function handlePredictPrice() {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/predict-price`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        genres,
+        dlc,
+        gamepass,
+        franchise,
+        discount
+      })
+    })
+    const result = await res.json()
+    setPredictedPrice(result.price_predicted)
+    setConfirmed(true)
+  }
+
+  async function handleSave() {
     setSaving(true)
     const payload = {
-      product_name: data.product_name,
-      product_type: data.product_type,
-      price_predicted: data.price_predicted,
-      price_modified: parseFloat(price),
-      quantity: parseInt(quantity || 0),
+      product_name: title,
+      product_type: "Game",
+      price_predicted: predictedPrice,
+      price_modified: predictedPrice,
+      quantity: parseInt(quantity),
       image_id: data.image_id
     }
     const res = await addProduct(payload)
@@ -53,13 +76,14 @@ export default function Results({ data, onAdded }) {
     onAdded(res)
   }
 
+
   async function handleAddQuantity() {
-    if (!existing) return
-    setSaving(true)
-    const newQty = (existing.quantity || 0) + parseInt(addingQty || 0)
-    await updateQuantity({ product_id: existing.product_id, quantity: newQty })
-    setSaving(false)
-    onAdded({ status: 'quantity updated', product_id: existing.product_id })
+    const newQty = existing.quantity + parseInt(addingQty)
+    await updateQuantity({
+      product_id: existing.product_id,
+      quantity: newQty
+    })
+    onAdded({ status: "quantity updated" })
   }
 
   if (!data) return null
@@ -67,56 +91,90 @@ export default function Results({ data, onAdded }) {
   return (
     <div className="results">
       <div className="result-row">
+
         <div className="result-image">
-          <img
-            src={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/image/${data.image_id}`}
-            alt="uploaded"
-          />
+          <img src={`${import.meta.env.VITE_API_BASE_URL}/image/${data.image_id}`} />
         </div>
 
         <div className="result-meta">
-          <h3>{data.product_name}</h3>
-          <p>{data.product_type}</p>
+          <h3>Game Details</h3>
 
-          <label>Predicted Price</label>
-          <input value={price} onChange={e => setPrice(e.target.value)} />
+          <label>Title</label>
+          <input value={title} onChange={(e) => setTitle(e.target.value)} />
 
-          {mode === 'loading' && <div>Checking inventory...</div>}
+          <label>Genres</label>
+          <input
+            value={genres.join(", ")}
+            onChange={(e) => setGenres(e.target.value.split(",").map(s => s.trim()))}
+          />
 
-          {mode === 'exists' && existing && (
-            <div>
-              <div style={{ marginBottom: 8 }}>Existing product found</div>
-              <div>Current quantity: {existing.quantity || 0}</div>
+          <label>DLC</label>
+          <select value={dlc} onChange={(e) => setDlc(Number(e.target.value))}>
+            <option value={0}>No</option>
+            <option value={1}>Yes</option>
+          </select>
 
-              <label>Add quantity</label>
-              <input
-                type="number"
-                value={addingQty}
-                onChange={e => setAddingQty(e.target.value)}
-              />
-              <button onClick={handleAddQuantity} disabled={saving}>
-                {saving ? 'Updating...' : 'Add Quantity'}
-              </button>
+          <label>Gamepass</label>
+          <select value={gamepass} onChange={(e) => setGamepass(Number(e.target.value))}>
+            <option value={0}>No</option>
+            <option value={1}>Yes</option>
+          </select>
 
-              <div style={{ marginTop: 10 }}>Or add as new product instead:</div>
-              <button onClick={() => setMode('new')}>Create New</button>
-            </div>
+          <label>Franchise</label>
+          <select value={franchise} onChange={(e) => setFranchise(Number(e.target.value))}>
+            <option value={0}>No</option>
+            <option value={1}>Yes</option>
+          </select>
+
+          <label>Discount</label>
+          <select value={discount} onChange={(e) => setDiscount(Number(e.target.value))}>
+            <option value={0}>No</option>
+            <option value={1}>Yes</option>
+          </select>
+
+          {!confirmed && (
+            <button onClick={handlePredictPrice}>Predict Price</button>
           )}
 
-          {mode === 'new' && (
-            <div>
-              <label>Quantity</label>
-              <input
-                type="number"
-                value={quantity}
-                onChange={e => setQuantity(e.target.value)}
-              />
-              <button onClick={handleCreate} disabled={saving}>
-                {saving ? 'Saving...' : 'Add to Inventory'}
-              </button>
-            </div>
+          {confirmed && (
+            <>
+              <label>Predicted Price</label>
+              <input value={predictedPrice} readOnly />
+
+              {mode === "new" && (
+                <>
+                  <label>Quantity</label>
+                  <input
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                  />
+                  <button disabled={saving} onClick={handleSave}>
+                    {saving ? "Saving..." : "Add to Inventory"}
+                  </button>
+                </>
+              )}
+
+              {mode === "exists" && (
+                <>
+                  <p>Existing product found</p>
+                  <p>Current quantity: {existing.quantity}</p>
+
+                  <label>Add Quantity</label>
+                  <input
+                    type="number"
+                    value={addingQty}
+                    onChange={(e) => setAddingQty(e.target.value)}
+                  />
+                  <button onClick={handleAddQuantity}>Add</button>
+
+                  <button onClick={handleSave}>Add as New</button>
+                </>
+              )}
+            </>
           )}
         </div>
+
       </div>
     </div>
   )

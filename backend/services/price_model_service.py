@@ -1,65 +1,27 @@
-import os
+import joblib
+import numpy as np
 from pathlib import Path
-from typing import Any, Dict
 
-_model = None
+root = Path(__file__).resolve().parents[2]
+model = joblib.load(root / "ml" / "Regression model code" / "random_forest_price_predictor.joblib")
+genre_list = joblib.load(root / "ml" / "Regression model code" / "genre_list.joblib")
+base_price_map = joblib.load(root / "ml" / "Regression model code" / "base_price_map.joblib")
 
-def _model_path(filename: str = 'final_tuned_random_forest_model.joblib') -> Path:
-    root = Path(__file__).resolve().parents[2]
-    return root / 'ml' / 'Regression model code' / filename
+def preprocess_for_model(payload):
+    title = payload.get("title", "").strip().lower()
+    genres = payload.get("genres", [])
+    dlc = int(payload.get("dlc", 0))
+    f2p = int(payload.get("f2p", 0))
+    gamepass = int(payload.get("gamepass", 0))
+    discount = int(payload.get("discount", 0))
 
-def load_model(filename: str = None):
-    global _model
-    if _model is not None:
-        return _model
-    fn = filename or 'final_tuned_random_forest_model.joblib'
-    path = _model_path(fn)
-    if not path.exists():
-        raise FileNotFoundError(f"Model file not found at {path}")
-    try:
-        import joblib
-    except Exception as e:
-        raise RuntimeError('joblib is required to load the model') from e
-    _model = joblib.load(path)
-    return _model
+    base_price = float(base_price_map.get(title, np.median(list(base_price_map.values()))))
 
-def predict(payload: Dict[str, Any]) -> float:
-    model = load_model()
-    try:
-        if hasattr(model, 'feature_names_in_'):
-            names = list(model.feature_names_in_)
-            row = []
-            for n in names:
-                v = payload.get(n)
-                try:
-                    row.append(float(v) if v is not None else 0.0)
-                except:
-                    row.append(0.0)
-            import numpy as np
-            X = np.array([row])
-            pred = model.predict(X)
-            return float(pred[0])
+    g_vec = [1 if g in genres else 0 for g in genre_list]
 
-        numeric_vals = []
-        for k, v in sorted(payload.items()):
-            try:
-                numeric_vals.append(float(v))
-            except:
-                pass
-        if numeric_vals:
-            import numpy as np
-            X = np.array([numeric_vals])
-            pred = model.predict(X)
-            return float(pred[0])
+    row = [dlc, f2p, gamepass, discount, base_price] + g_vec
+    return np.array(row).reshape(1, -1)
 
-        pn = str(payload.get('product_name', ''))
-        pt = str(payload.get('product_type', ''))
-        h = abs(hash(pn)) % 1000
-        h2 = abs(hash(pt)) % 1000
-        row = [float(h), float(len(pn)), float(len(pt)), float(h2)]
-        import numpy as np
-        X = np.array([row])
-        pred = model.predict(X)
-        return float(pred[0])
-    except Exception as e:
-        raise
+def predict(payload):
+    X = preprocess_for_model(payload)
+    return float(model.predict(X)[0])
