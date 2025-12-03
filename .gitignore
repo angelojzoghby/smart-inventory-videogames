@@ -15,7 +15,6 @@ build/
 
 *.h5
 *.pkl
-*.joblib
 
 ml/dataset/
 ml/images/
